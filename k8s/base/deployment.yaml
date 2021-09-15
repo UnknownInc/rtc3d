@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: psiapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      domain: psi
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        domain: psi
+    spec:
+      volumes:
+      - name: gcsa-volume
+        secret:
+          secretName: gcsa
+      containers:
+      - name: psiappcontainer
+        image: psiappimage:tag
+        imagePullPolicy: "Always"
+        volumeMounts:
+        - name: gcsa-volume
+          readOnly: true
+          mountPath: "/etc/gcsa"
+        envFrom:
+          - secretRef:
+              name: psienvsecrets
+        env:
+        - name: PORT
+          value: '8080'
+        - name: REDIS_PORT
+          value: '6379'
+        - name: REDIS_HOST
+          value: 'redis-master'
+        - name: REDIS_DB
+          value: '0'
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis
+              key: redis-password
+        - name: loglevel
+          valueFrom:
+            configMapKeyRef:
+              name: appconfig
+              key: LOGLEVEL
+        - name: WEBSOCKET
+          valueFrom:
+            configMapKeyRef:
+              name: appconfig
+              key: WEBSOCKET
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appconfig
+data:
+  LOGLEVEL: "info"
+  WEBSOCKET: "1"
